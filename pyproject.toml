@@ -1,0 +1,14 @@
+[project]
+name = "butterknife-toolkit"
+version = "0.1.0"
+description = "Media extraction utilities for Butter Knife"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-q"
+testpaths = ["tests"]

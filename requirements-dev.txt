@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest==7.4.4
+responses==0.25.0
+ruff==0.4.5
