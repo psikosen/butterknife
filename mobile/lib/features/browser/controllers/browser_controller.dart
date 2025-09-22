@@ -17,6 +17,7 @@ class BrowserController extends GetxController {
   final Rxn<Uri> currentUrl = Rxn<Uri>();
   final RxnString validationError = RxnString();
   final RxBool isLoading = false.obs;
+  final RxBool showControls = true.obs;
 
   WebViewController? _webViewController;
 
@@ -80,6 +81,20 @@ class BrowserController extends GetxController {
       message: 'Starting extraction for $url',
     );
     return _extractionController.processPage(url, controller);
+  }
+
+  void toggleControlsVisibility() {
+    final newVisibility = !showControls.value;
+    showControls.value = newVisibility;
+    AppLogger.logInfo(
+      filename: 'lib/features/browser/controllers/browser_controller.dart',
+      classname: 'BrowserController',
+      function: 'toggleControlsVisibility',
+      systemSection: 'browser',
+      message: newVisibility
+          ? 'Showing browser controls'
+          : 'Hiding browser controls',
+    );
   }
 
   String? _normalizeInput(String input) {
