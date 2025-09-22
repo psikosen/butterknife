@@ -87,6 +87,24 @@ Butter Knife does not include third-party analytics in v1. All network requests 
 17. Understand the cost of your operations.
 
 
+
+## Flutter Application
+
+The Flutter implementation lives in [`mobile/`](mobile/). It follows the feature-first structure outlined in the engineering plan with GetX bindings, typed models, WebView-driven extraction, and a basic gallery panel.
+
+### Running the app
+
+1. Install the Flutter stable SDK (3.22 or newer).
+2. From the `mobile/` directory run `flutter pub get`.
+3. Launch the application with `flutter run`.
+
+### Verification commands
+
+- `flutter test` — validates the Dart models, URI helpers, and settings state.
+- `flutter analyze` — lints the Flutter codebase using `flutter_lints`.
+
+The mobile logs use the structured schema described above and emit the `[The 17 Commandments of Quality Code]` derived line so traceability is consistent across platforms.
+
 ## Developer Utilities
 
 To derisk the extraction stack we ship a Python toolkit in the `butterknife/` directory. It implements the URL normalization, filtering, probing, and download orchestration used in the mobile app plan. Engineers can exercise the pipeline end-to-end from the command line while Flutter UI work progresses.
