@@ -81,4 +81,12 @@ class SettingsController extends GetxController {
   Future<void> toggleAutoplayThumbnails(bool enabled) => updateSettings(
         state.value.copyWith(includeAutoplayThumbnails: enabled),
       );
+
+  Future<void> setImageSaveDirectory(String? path) => updateSettings(
+        state.value.copyWith(imageSaveDirectory: path),
+      );
+
+  Future<void> setVideoSaveDirectory(String? path) => updateSettings(
+        state.value.copyWith(videoSaveDirectory: path),
+      );
 }

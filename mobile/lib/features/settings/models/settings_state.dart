@@ -6,6 +6,8 @@ class SettingsState {
     required this.includeSvg,
     required this.includeGif,
     required this.includeAutoplayThumbnails,
+    this.imageSaveDirectory,
+    this.videoSaveDirectory,
   });
 
   factory SettingsState.initial() => const SettingsState(
@@ -15,6 +17,8 @@ class SettingsState {
         includeSvg: true,
         includeGif: true,
         includeAutoplayThumbnails: false,
+        imageSaveDirectory: null,
+        videoSaveDirectory: null,
       );
 
   factory SettingsState.fromJson(Map<String, dynamic> json) => SettingsState(
@@ -24,6 +28,8 @@ class SettingsState {
         includeSvg: json['includeSvg'] as bool? ?? true,
         includeGif: json['includeGif'] as bool? ?? true,
         includeAutoplayThumbnails: json['includeAutoplayThumbnails'] as bool? ?? false,
+        imageSaveDirectory: json['imageSaveDirectory'] as String?,
+        videoSaveDirectory: json['videoSaveDirectory'] as String?,
       );
 
   final int minImageBytes;
@@ -32,6 +38,8 @@ class SettingsState {
   final bool includeSvg;
   final bool includeGif;
   final bool includeAutoplayThumbnails;
+  final String? imageSaveDirectory;
+  final String? videoSaveDirectory;
 
   SettingsState copyWith({
     int? minImageBytes,
@@ -40,6 +48,8 @@ class SettingsState {
     bool? includeSvg,
     bool? includeGif,
     bool? includeAutoplayThumbnails,
+    Object? imageSaveDirectory = _sentinel,
+    Object? videoSaveDirectory = _sentinel,
   }) =>
       SettingsState(
         minImageBytes: minImageBytes ?? this.minImageBytes,
@@ -49,6 +59,12 @@ class SettingsState {
         includeGif: includeGif ?? this.includeGif,
         includeAutoplayThumbnails:
             includeAutoplayThumbnails ?? this.includeAutoplayThumbnails,
+        imageSaveDirectory: imageSaveDirectory == _sentinel
+            ? this.imageSaveDirectory
+            : imageSaveDirectory as String?,
+        videoSaveDirectory: videoSaveDirectory == _sentinel
+            ? this.videoSaveDirectory
+            : videoSaveDirectory as String?,
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -58,6 +74,8 @@ class SettingsState {
         'includeSvg': includeSvg,
         'includeGif': includeGif,
         'includeAutoplayThumbnails': includeAutoplayThumbnails,
+        'imageSaveDirectory': imageSaveDirectory,
+        'videoSaveDirectory': videoSaveDirectory,
       };
 
   @override
@@ -71,7 +89,9 @@ class SettingsState {
         other.concurrentDownloads == concurrentDownloads &&
         other.includeSvg == includeSvg &&
         other.includeGif == includeGif &&
-        other.includeAutoplayThumbnails == includeAutoplayThumbnails;
+        other.includeAutoplayThumbnails == includeAutoplayThumbnails &&
+        other.imageSaveDirectory == imageSaveDirectory &&
+        other.videoSaveDirectory == videoSaveDirectory;
   }
 
   @override
@@ -82,5 +102,9 @@ class SettingsState {
         includeSvg,
         includeGif,
         includeAutoplayThumbnails,
+        imageSaveDirectory,
+        videoSaveDirectory,
       );
 }
+
+const Object _sentinel = Object();

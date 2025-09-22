@@ -16,6 +16,8 @@ dependencies:
   webview_flutter: ^4.7.0
   html: ^0.15.4
   shared_preferences: ^2.2.2
+  file_picker: ^6.1.1
+  video_player: ^2.8.6
 
 dev_dependencies:
   flutter_test:

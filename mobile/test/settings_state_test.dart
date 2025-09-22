@@ -14,10 +14,29 @@ void main() {
     });
 
     test('serializes to and from json', () {
-      const state = SettingsState.initial();
+      final state = SettingsState.initial().copyWith(
+        imageSaveDirectory: '/tmp/images',
+        videoSaveDirectory: '/tmp/videos',
+      );
       final json = state.toJson();
       final parsed = SettingsState.fromJson(json);
       expect(parsed, equals(state));
+    });
+
+    test('copyWith updates download directories', () {
+      const state = SettingsState.initial();
+      final updated = state.copyWith(
+        imageSaveDirectory: '/data/images',
+        videoSaveDirectory: '/data/videos',
+      );
+      expect(updated.imageSaveDirectory, '/data/images');
+      expect(updated.videoSaveDirectory, '/data/videos');
+      final cleared = updated.copyWith(
+        imageSaveDirectory: null,
+        videoSaveDirectory: null,
+      );
+      expect(cleared.imageSaveDirectory, isNull);
+      expect(cleared.videoSaveDirectory, isNull);
     });
   });
 }
