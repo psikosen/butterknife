@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -41,11 +42,11 @@ class _BrowserViewState extends State<BrowserView> {
         NavigationDelegate(
           onPageStarted: (url) {
             _browserController.isLoading.value = true;
-            _browserController.currentUrl.value = Uri.tryParse(url);
+            _browserController.updateCurrentUrlFromWebView(url);
           },
           onPageFinished: (url) {
             _browserController.isLoading.value = false;
-            _browserController.currentUrl.value = Uri.tryParse(url);
+            _browserController.updateCurrentUrlFromWebView(url);
           },
           onWebResourceError: (error) {
             final appError = UnknownError(
@@ -71,6 +72,19 @@ class _BrowserViewState extends State<BrowserView> {
               icon: Icon(isVisible ? Icons.menu_open : Icons.menu),
               tooltip: isVisible ? 'Hide address bar' : 'Show address bar',
               onPressed: _browserController.toggleControlsVisibility,
+            );
+          }),
+          IconButton(
+            icon: const Icon(Icons.menu_book),
+            tooltip: 'Show bookmarks',
+            onPressed: _showFavorites,
+          ),
+          Obx(() {
+            final hasUrl = _browserController.currentUrl.value != null;
+            return IconButton(
+              icon: const Icon(Icons.copy),
+              tooltip: 'Copy current link',
+              onPressed: hasUrl ? _copyCurrentLink : null,
             );
           }),
           Obx(() {
@@ -162,6 +176,134 @@ class _BrowserViewState extends State<BrowserView> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showFavorites() async {
+    AppLogger.logInfo(
+      filename: 'lib/features/browser/views/browser_view.dart',
+      classname: '_BrowserViewState',
+      function: '_showFavorites',
+      systemSection: 'browser',
+      message: 'Opening favorites sheet',
+    );
+    if (!mounted) {
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Obx(() {
+              final favorites =
+                  _browserController.favorites.toList(growable: false);
+              if (favorites.isEmpty) {
+                return const SizedBox(
+                  height: 200,
+                  child: Center(
+                    child: Text('No bookmarked pages yet.'),
+                  ),
+                );
+              }
+              return SizedBox(
+                height: 360,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Bookmarked pages',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.separated(
+                        itemBuilder: (context, index) {
+                          final url = favorites[index];
+                          return ListTile(
+                            leading: const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                            ),
+                            title: Text(
+                              url.toString(),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: const Icon(Icons.open_in_new),
+                            onTap: () async {
+                              Navigator.of(sheetContext).pop();
+                              AppLogger.logInfo(
+                                filename:
+                                    'lib/features/browser/views/browser_view.dart',
+                                classname: '_BrowserViewState',
+                                function: '_showFavorites',
+                                systemSection: 'browser',
+                                message: 'Opening bookmarked URL $url',
+                              );
+                              try {
+                                await _browserController.openFromFavorites(url);
+                              } catch (_) {
+                                if (!mounted) {
+                                  return;
+                                }
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Failed to open ${url.toString()}',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        },
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemCount: favorites.length,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _copyCurrentLink() async {
+    final url = _browserController.currentUrl.value;
+    if (url == null) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Open a page before copying the link.'),
+        ),
+      );
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: url.toString()));
+    AppLogger.logInfo(
+      filename: 'lib/features/browser/views/browser_view.dart',
+      classname: '_BrowserViewState',
+      function: '_copyCurrentLink',
+      systemSection: 'browser',
+      message: 'Copied current URL $url to clipboard',
+    );
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Link copied to clipboard')),
     );
   }
 
@@ -299,6 +441,8 @@ class _UrlInputBar extends StatelessWidget {
 
   final BrowserController controller;
 
+  static const double _actionButtonWidth = 120;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -319,29 +463,53 @@ class _UrlInputBar extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              FilledButton(
-                onPressed: controller.openCurrentUrl,
-                child: const Text('Open'),
+              SizedBox(
+                width: _actionButtonWidth,
+                child: FilledButton(
+                  onPressed: controller.openCurrentUrl,
+                  child: const Text('Open'),
+                ),
               ),
               const SizedBox(width: 12),
-              FilledButton.icon(
-                onPressed: () async {
-                  final result = await controller.processCurrentPage();
-                  result.when(
-                    success: (_) {},
-                    failure: (error) {
-                      Get.snackbar(
-                        'Processing failed',
-                        error.message,
-                        backgroundColor: Colors.red.shade700,
-                        colorText: Colors.white,
-                      );
-                    },
-                  );
-                },
-                icon: const Icon(Icons.auto_awesome),
-                label: const Text('Process'),
+              SizedBox(
+                width: _actionButtonWidth,
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    final result = await controller.processCurrentPage();
+                    result.when(
+                      success: (_) {},
+                      failure: (error) {
+                        Get.snackbar(
+                          'Processing failed',
+                          error.message,
+                          backgroundColor: Colors.red.shade700,
+                          colorText: Colors.white,
+                        );
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.auto_awesome),
+                  label: const Text('Process'),
+                ),
               ),
+              const SizedBox(width: 8),
+              Obx(() {
+                final isBookmarked = controller.isCurrentBookmarked.value;
+                final hasUrl = controller.currentUrl.value != null;
+                return IconButton(
+                  tooltip:
+                      isBookmarked ? 'Remove bookmark' : 'Bookmark this page',
+                  icon: Icon(
+                    isBookmarked ? Icons.star : Icons.star_border,
+                    color: isBookmarked ? Colors.amber : null,
+                  ),
+                  onPressed: hasUrl
+                      ? () {
+                          controller.toggleBookmark();
+                        }
+                      : null,
+                );
+              }),
             ],
           ),
           Obx(() {
