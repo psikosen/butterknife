@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../network/dio_client.dart';
+import '../storage/browser_storage.dart';
 import '../storage/settings_storage.dart';
 import '../../features/browser/controllers/browser_controller.dart';
 import '../../features/download/controllers/download_controller.dart';
@@ -19,6 +20,11 @@ class AppBindings extends Bindings {
       return controller;
     }, permanent: true);
 
+    Get.putAsync<BrowserStorage>(
+      () => const BrowserStorageFactory().create(),
+      permanent: true,
+    );
+
     Get.lazyPut<ExtractionController>(
       () => ExtractionController(Get.find<Dio>()),
       fenix: true,
@@ -28,7 +34,10 @@ class AppBindings extends Bindings {
       fenix: true,
     );
     Get.lazyPut<BrowserController>(
-      () => BrowserController(Get.find<ExtractionController>()),
+      () => BrowserController(
+        Get.find<ExtractionController>(),
+        Get.find<BrowserStorage>(),
+      ),
       fenix: true,
     );
   }
